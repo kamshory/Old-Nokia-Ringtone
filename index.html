@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone</title>
+</head>
+<body>
+    <script src="Tone.js"></script>
+    <script>
+        var tones = [];
+        function playMusic(song, octave, tempo)
+        {
+            idx = 0;
+            var synth = new Tone.Synth().toDestination();
+            var now = Tone.now();
+            song = song.replace(/s+/g,' ').trim();
+            tones = song.split(' ');
+            var curtime = now;
+            var delay = 0;
+            for(var i in tones)
+            {
+                var parsed = parseTone(tones[i]);
+                var tm = 240/(tempo * parseInt(parsed[1]));
+                
+                var oct = parsed[2];
+                oct += octave;
+                var tone = parsed[0];
+                
+                if(tone.indexOf('.') >=0)
+                {
+                    tone = tone.replace('.', '');
+                }
+
+                if(tone.indexOf('#') >=0)
+                {
+                    tone = tone.replace('#', '');
+                    tone += '#';
+                }
+
+                if(tone.indexOf('p') >=0 )
+                {
+                    tone = '0';
+                    oct = '';
+                }   
+
+                tone = tone.replace('-', '0');
+                tone = tone+oct;
+                var duration = parsed[1]+"n";
+
+                synth.triggerAttackRelease(tone, duration, curtime);
+                i = 0;
+                setTimeout(function(){
+                    setStatus();
+                }, delay);
+                curtime += tm;
+                delay += tm * 1000;
+            }
+        }
+
+        window.onload = function()
+        {
+            document.querySelector('#play').addEventListener('click', function(){
+                var song = document.querySelector('#song').value;
+                var octave = parseInt(document.querySelector('#octave').value)
+                var tempo = parseInt(document.querySelector('#tempo').value)
+                playMusic(song, octave, tempo);
+            });
+    
+        } 
+        
+        var idx = 0;
+        function setStatus()
+        {
+            document.querySelector('.status').innerHTML = tones[idx]+' ';
+            idx++;
+        }
+        function parseTone(tone)
+        {
+            var numbers = '0123456789';
+            var i = 0;
+            var chr = '';
+            do
+            {
+                chr = tone.substring(i, i+1);
+                i++;
+            }
+            while(numbers.indexOf(chr) >= 0 && chr != '');
+            var dur = parseInt(tone.substring(0, i-1));
+            var start = i-1;
+            do
+            {
+                chr = tone.substring(i, i+1);
+                i++;
+            }
+            while(numbers.indexOf(chr) == -1 && chr != '');
+            var note = tone.substring(start, i-1);
+            var octav = parseInt(tone.substring(i-1));
+            return [note, dur, octav];
+        }
+
+    </script>
+    <div class="label">Tempo</div>
+    <div class="input"><input type="number" name="tempo" id="tempo" value="80"></div>
+    <div class="label">Octave</div>
+    <div class="input"><input type="number" name="octave" id="octave" value="3"></div>
+    <div class="label">Song</div>
+    <div class="input"><textarea name="song" id="song" cols="30" rows="10">16c2 16d2 6e2 8d2 8c2 4d2 4g2 32- 6c2 8c2 8b1 16a1 4b1 4e2 32- 6a1 6b1 6c2 6g1 6b1 8c2 6d2 6e2 8c2 4d2</textarea></div>
+
+    <button id="play">Play</button>
+
+    <div class="status"></div>
+</body>
+</html>
